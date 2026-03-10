@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodieExpress - Cart</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb orb-1"></div>
+        <div class="bg-orb orb-2"></div>
+        <div class="bg-orb orb-3"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="logo">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <span>FoodieExpress</span>
+        </div>
+        
+        <div class="nav-menu">
+            <a href="index.html" class="nav-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="cart.html" class="nav-link active">
+                <i class="fas fa-shopping-cart"></i> Cart
+                <span class="cart-count" id="cartCount">0</span>
+            </a>
+            <div class="user-dropdown">
+                <button class="user-btn">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">User</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-content">
+                    <a href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content cart-page">
+        <div class="cart-container">
+            <!-- Cart Header -->
+            <div class="cart-header">
+                <h1>
+                    <i class="fas fa-shopping-cart"></i> Your Cart
+                </h1>
+                <button class="clear-cart-btn" onclick="clearCart()">
+                    <i class="fas fa-trash"></i> Clear Cart
+                </button>
+            </div>
+
+            <!-- Cart Content -->
+            <div class="cart-content">
+                <!-- Cart Items -->
+                <div class="cart-items-section">
+                    <div id="cartItemsContainer">
+                        <!-- Cart items will be rendered here -->
+                    </div>
+
+                    <!-- Empty Cart Message -->
+                    <div class="empty-cart" id="emptyCart" style="display: none;">
+                        <i class="fas fa-shopping-basket"></i>
+                        <h2>Your cart is empty</h2>
+                        <p>Looks like you haven't added any food yet</p>
+                        <a href="index.html" class="browse-btn">
+                            <i class="fas fa-utensils"></i> Browse Food
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Cart Summary -->
+                <div class="cart-summary-section" id="cartSummarySection">
+                    <div class="cart-summary">
+                        <h3>
+                            <i class="fas fa-receipt"></i> Order Summary
+                        </h3>
+                        
+                        <div class="summary-items" id="summaryItems">
+                            <!-- Summary items will be rendered here -->
+                        </div>
+                        
+                        <div class="summary-divider"></div>
+                        
+                        <div class="summary-row subtotal">
+                            <span>Subtotal</span>
+                            <span id="subtotalPrice">₹0</span>
+                        </div>
+                        
+                        <div class="summary-row delivery">
+                            <span>Delivery Fee</span>
+                            <span id="deliveryFee">₹40</span>
+                        </div>
+                        
+                        <div class="summary-row tax">
+                            <span>Tax (5%)</span>
+                            <span id="taxAmount">₹0</span>
+                        </div>
+                        
+                        <div class="summary-divider"></div>
+                        
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span id="totalPrice">₹0</span>
+                        </div>
+
+                        <!-- Place Order Button -->
+                        <button class="place-order-btn" onclick="placeOrder()">
+                            <i class="fas fa-check-circle"></i> Place Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Message</span>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Check if user is logged in
+        checkAuth();
+
+        // Initialize page
+        initializeCartPage();
+
+        // Display user name
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        if (user.name) {
+            document.getElementById('userName').textContent = user.name;
+        }
+
+        // Update cart count
+        updateCartCount();
+
+        // Render cart
+        renderCart();
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('currentUser');
+            showToast('Logged out successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        // Clear cart function
+        function clearCart() {
+            if (confirm('Are you sure you want to clear your cart?')) {
+                localStorage.removeItem('foodieCart');
+                renderCart();
+                updateCartCount();
+                showToast('Cart cleared!', 'success');
+            }
+        }
+
+        // Place order function
+        function placeOrder() {
+            const cart = JSON.parse(localStorage.getItem('foodieCart') || '[]');
+            
+            if (cart.length === 0) {
+                showToast('Your cart is empty!', 'error');
+                return;
+            }
+
+            // Calculate total
+            let subtotal = 0;
+            cart.forEach(item => {
+                subtotal += item.price * item.quantity;
+            });
+            
+            const deliveryFee = 40;
+            const tax = Math.round(subtotal * 0.05);
+            const total = subtotal + deliveryFee + tax;
+
+            // Create order object
+            const order = {
+                orderId: 'ORD' + Date.now(),
+                items: cart,
+                subtotal: subtotal,
+                deliveryFee: deliveryFee,
+                tax: tax,
+                total: total,
+                orderDate: new Date().toISOString(),
+                status: 'Pending',
+                user: user.name || 'User'
+            };
+
+            // Save order to localStorage
+            const orders = JSON.parse(localStorage.getItem('foodieOrders') || '[]');
+            orders.push(order);
+            localStorage.setItem('foodieOrders', JSON.stringify(orders));
+
+            // Clear cart
+            localStorage.removeItem('foodieCart');
+
+            // Show success and redirect
+            showToast('Order placed successfully!', 'success');
+
+            setTimeout(() => {
+                window.location.href = 'order.html';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
+

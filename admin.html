@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodieExpress - Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb orb-1"></div>
+        <div class="bg-orb orb-2"></div>
+        <div class="bg-orb orb-3"></div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar admin-navbar">
+        <div class="nav-brand admin-brand">
+            <div class="logo admin-logo">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <span>FoodieExpress</span>
+            <span class="admin-badge">Admin</span>
+        </div>
+        
+        <div class="nav-menu">
+            <a href="index.html" class="nav-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="cart.html" class="nav-link">
+                <i class="fas fa-shopping-cart"></i> Cart
+                <span class="cart-count" id="cartCount">0</span>
+            </a>
+            <div class="user-dropdown">
+                <button class="user-btn">
+                    <i class="fas fa-user-shield"></i>
+                    <span id="userName">Admin</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-content">
+                    <a href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content admin-page">
+        <div class="admin-container">
+            <!-- Admin Header -->
+            <div class="admin-header">
+                <h1>
+                    <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                </h1>
+                <p>Manage orders and view all customer orders</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon orders">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalOrders">0</span>
+                        <span class="stat-label">Total Orders</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon revenue">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalRevenue">₹0</span>
+                        <span class="stat-label">Total Revenue</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon items">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalItems">0</span>
+                        <span class="stat-label">Items Ordered</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="pendingOrders">0</span>
+                        <span class="stat-label">Pending Orders</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="orders-section">
+                <div class="section-header">
+                    <h2>
+                        <i class="fas fa-list"></i> All Orders
+                    </h2>
+                    <button class="refresh-btn" onclick="refreshOrders()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="orders-table-container">
+                    <table class="orders-table" id="ordersTable">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> Order ID</th>
+                                <th><i class="fas fa-user"></i> Customer</th>
+                                <th><i class="fas fa-utensils"></i> Items</th>
+                                <th><i class="fas fa-rupee-sign"></i> Total</th>
+                                <th><i class="fas fa-clock"></i> Status</th>
+                                <th><i class="fas fa-calendar"></i> Date</th>
+                                <th><i class="fas fa-cog"></i> Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <!-- Orders will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- No Orders Message -->
+                <div class="no-orders" id="noOrders" style="display: none;">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No orders yet</h3>
+                    <p>When customers place orders, they will appear here</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Order Detail Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Order Details</h2>
+                <button class="close-modal" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Order details will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Message</span>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Check if admin is logged in
+        checkAdminAuth();
+
+        // Initialize admin page
+        initializeAdminPage();
+
+        // Display admin name
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        if (user.name) {
+            document.getElementById('userName').textContent = user.name;
+        }
+
+        // Update cart count
+        updateCartCount();
+
+        // Load orders
+        loadAdminOrders();
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('currentUser');
+            showToast('Logged out successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        // Load admin orders
+        function loadAdminOrders() {
+            const orders = JSON.parse(localStorage.getItem('foodieOrders') || '[]');
+            
+            // Update stats
+            document.getElementById('totalOrders').textContent = orders.length;
+            
+            let totalRevenue = 0;
+            let totalItems = 0;
+            let pendingOrders = 0;
+
+            orders.forEach(order => {
+                totalRevenue += order.total;
+                order.items.forEach(item => {
+                    totalItems += item.quantity;
+                });
+                if (order.status === 'Pending') {
+                    pendingOrders++;
+                }
+            });
+
+            document.getElementById('totalRevenue').textContent = '₹' + totalRevenue;
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('pendingOrders').textContent = pendingOrders;
+
+            // Render orders table
+            const tableBody = document.getElementById('ordersTableBody');
+            const noOrders = document.getElementById('noOrders');
+            const tableContainer = document.querySelector('.orders-table-container');
+
+            if (orders.length === 0) {
+                tableContainer.style.display = 'none';
+                noOrders.style.display = 'block';
+                return;
+            }
+
+            tableContainer.style.display = 'block';
+            noOrders.style.display = 'none';
+
+            // Sort by date (newest first)
+            orders.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+
+            let html = '';
+            orders.forEach(order => {
+                const date = new Date(order.orderDate).toLocaleDateString();
+                const itemsSummary = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
+                const statusClass = order.status === 'Pending' ? 'pending' : 'completed';
+                
+                html += `
+                    <tr>
+                        <td class="order-id">${order.orderId}</td>
+                        <td>${order.user}</td>
+                        <td class="items-cell" title="${itemsSummary}">${order.items.length} item(s)</td>
+                        <td class="price-cell">₹${order.total}</td>
+                        <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                        <td>${date}</td>
+                        <td>
+                            <button class="view-btn" onclick="viewOrderDetail('${order.orderId}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+        }
+
+        // View order detail
+        function viewOrderDetail(orderId) {
+            const orders = JSON.parse(localStorage.getItem('foodieOrders') || '[]');
+            const order = orders.find(o => o.orderId === orderId);
+            
+            if (!order) {
+                showToast('Order not found!', 'error');
+                return;
+            }
+
+            let itemsHtml = '';
+            order.items.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                itemsHtml += `
+                    <div class="modal-item">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span>₹${itemTotal}</span>
+                    </div>
+                `;
+            });
+
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <span class="label">Order ID:</span>
+                    <span class="value">${order.orderId}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Customer:</span>
+                    <span class="value">${order.user}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Status:</span>
+                    <span class="status-badge ${order.status === 'Pending' ? 'pending' : 'completed'}">${order.status}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Date:</span>
+                    <span class="value">${new Date(order.orderDate).toLocaleString()}</span>
+                </div>
+                <div class="detail-items">
+                    <h4>Items:</h4>
+                    ${itemsHtml}
+                </div>
+                <div class="detail-total">
+                    <span>Total:</span>
+                    <span>₹${order.total}</span>
+                </div>
+            `;
+
+            document.getElementById('orderModal').classList.add('open');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('orderModal').classList.remove('open');
+        }
+
+        // Refresh orders
+        function refreshOrders() {
+            loadAdminOrders();
+            showToast('Orders refreshed!', 'success');
+        }
+    </script>
+</body>
+</html>
+
